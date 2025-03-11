@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nest-load-balancer
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nest-load-balancer
+  template:
+    metadata:
+      labels:
+        app: nest-load-balancer
+    spec:
+      containers:
+        - name: nest-load-balancer
+          image: nest-load-balancer
+          ports:
+            - containerPort: 3000
