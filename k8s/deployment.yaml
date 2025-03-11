@@ -14,6 +14,6 @@ spec:
     spec:
       containers:
         - name: nest-load-balancer
-          image: nest-load-balancer
+          image: nmbf02/nest-load-balancer
           ports:
             - containerPort: 3000
