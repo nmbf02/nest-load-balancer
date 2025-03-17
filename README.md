@@ -1,98 +1,211 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# 🚀 Load Balancer Exploration in Kubernetes with a NestJS Application
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+## 📌 Overview
+This project demonstrates how a **Kubernetes LoadBalancer** distributes traffic across multiple instances of a **NestJS** application. The project includes building the application, containerization with Docker, deploying on Kubernetes, and testing performance with Apache Bench (`ab`) and JMeter.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## 📁 Features
+- 🏗 **NestJS API** with a `/load-test` endpoint.
+- 🐳 **Dockerized application** for containerization.
+- ☸️ **Kubernetes deployment** with multiple replicas.
+- ⚖️ **Load balancing** using a `LoadBalancer` service.
+- 🏎 **Performance testing** using **Apache Bench (ab)** and **JMeter**.
 
-## Description
+---
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+# 🛠️ **Step-by-Step Guide to Build & Deploy the Project**
 
-## Project setup
+## 📌 1. Install Required Dependencies
+Make sure you have the following installed:
+- **[Node.js (LTS)](https://nodejs.org/en/download)**
+- **[Docker Desktop](https://www.docker.com/products/docker-desktop/)**
+- **[Kubernetes (kubectl)](https://kubernetes.io/docs/tasks/tools/)**
+- **[Minikube (if not using Docker Desktop)](https://minikube.sigs.k8s.io/docs/start/)**
+- **[JMeter (for performance testing)](https://jmeter.apache.org/download_jmeter.cgi)**
+- **[Apache Bench (included in XAMPP for Windows)](https://www.apachefriends.org/index.html)**
 
+---
+
+## 📌 2. Create and Configure the NestJS Application
+### 2.1. Create a New NestJS Project
 ```bash
-$ npm install
+npm i -g @nestjs/cli
+nest new nest-load-balancer
+cd nest-load-balancer
 ```
 
-## Compile and run the project
-
+### 2.2. Create a Controller for Load Testing
+Run:
 ```bash
-# development
-$ npm run start
+nest generate controller load-test
+```
+Modify `src/load-test/load-test.controller.ts`:
+```typescript
+import { Controller, Get } from '@nestjs/common';
 
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+@Controller('load-test')
+export class LoadTestController {
+  @Get()
+  handleLoadTest(): string {
+    let sum = 0;
+    for (let i = 0; i < 1_000_000; i++) {
+      sum += i;
+    }
+    return `Processed Load Test: ${sum}`;
+  }
+}
 ```
 
-## Run tests
+### 2.3. Register the Controller in `app.module.ts`
+Modify `src/app.module.ts`:
+```typescript
+import { Module } from '@nestjs/common';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { LoadTestController } from './load-test/load-test.controller';
 
-```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+@Module({
+  controllers: [AppController, LoadTestController],
+  providers: [AppService],
+})
+export class AppModule {}
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
+### 2.4. Run Locally to Test
 ```bash
-$ npm install -g mau
-$ mau deploy
+npm run start
+```
+Test with:
+```
+http://localhost:3000/load-test
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+---
 
-## Resources
+## 📌 3. Dockerize the Application
+### 3.1. Create a `Dockerfile` in the root folder
+```dockerfile
+FROM node:18
 
-Check out a few resources that may come in handy when working with NestJS:
+WORKDIR /app
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+COPY package.json package-lock.json ./
+RUN npm install
 
-## Support
+COPY . .
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+RUN npm run build
 
-## Stay in touch
+EXPOSE 3000
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+CMD ["npm", "run", "start"]
+```
 
-## License
+### 3.2. Build and Tag the Docker Image
+```bash
+docker build -t your_dockerhub_username/nest-load-balancer .
+```
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+### 3.3. Push the Image to Docker Hub
+```bash
+docker login
+docker push your_dockerhub_username/nest-load-balancer
+```
+
+---
+
+## 📌 4. Deploy to Kubernetes
+### 4.1. Create Kubernetes Deployment
+Create `k8s/deployment.yaml`:
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nest-load-balancer
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nest-load-balancer
+  template:
+    metadata:
+      labels:
+        app: nest-load-balancer
+    spec:
+      containers:
+        - name: nest-load-balancer
+          image: your_dockerhub_username/nest-load-balancer
+          ports:
+            - containerPort: 3000
+```
+
+### 4.2. Create Kubernetes Service
+Create `k8s/service.yaml`:
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: nest-load-balancer-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: nest-load-balancer
+  ports:
+    - protocol: TCP
+      port: 4000
+      targetPort: 3000
+```
+
+### 4.3. Apply the Deployment and Service
+```bash
+kubectl apply -f k8s/deployment.yaml
+kubectl apply -f k8s/service.yaml
+```
+
+### 4.4. Verify Everything is Running
+```bash
+kubectl get pods
+kubectl get services
+```
+Test with:
+```
+http://localhost:4000/load-test
+```
+
+---
+
+## 📌 5. Performance Testing
+
+### ✅ Apache Bench (`ab`)
+Run:
+```powershell
+cd C:\xampp\apache\bin
+.\ab.exe -n 1000 -c 10 http://localhost:4000/load-test
+```
+
+### ✅ JMeter
+1. Open **JMeter** and create a **Thread Group**.
+2. Configure:
+   - **Threads (Users):** `100`
+   - **Loop Count:** `10`
+3. Add an **HTTP Request** pointing to `http://localhost:4000/load-test`.
+4. Run the test and analyze results.
+
+---
+
+## 📌 6. Scaling and Observing Load Distribution
+### 6.1. Increase Replicas
+```bash
+kubectl scale deployment nest-load-balancer --replicas=5
+kubectl get pods
+```
+
+### 6.2. View Logs to Check Load Balancing
+```bash
+kubectl logs -f -l app=nest-load-balancer
+```
+
+---
+
+## 📩 Contact
+For any questions or contributions, feel free to reach out! 🚀
+```
