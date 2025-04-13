@@ -1,6 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
 
-@Controller('api/load-test')
+@Controller('load-test')
 export class LoadTestController {
   @Get()
   handleLoadTest(): string {
